@@ -12,6 +12,8 @@
 	<string>plus.svc.xworkmate</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleIconFile</key>
+	<string>OpenClaw</string>
 	<key>CFBundleName</key>
 	<string>XWorkmate</string>
 	<key>CFBundlePackageType</key>
