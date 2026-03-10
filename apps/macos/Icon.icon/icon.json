@@ -6,12 +6,12 @@
     {
       "layers" : [
         {
-          "image-name" : "openclaw-mac.png",
-          "name" : "openclaw-mac",
+          "image-name" : "xworkmate-mac.png",
+          "name" : "xworkmate-mac",
           "position" : {
-            "scale" : 1.07,
+            "scale" : 1.0,
             "translation-in-points" : [
-              -2,
+              0,
               0
             ]
           }

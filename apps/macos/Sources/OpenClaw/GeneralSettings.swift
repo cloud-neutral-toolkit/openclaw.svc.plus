@@ -7,6 +7,7 @@ import SwiftUI
 
 struct GeneralSettings: View {
     @Bindable var state: AppState
+    @Environment(\.openSettings) private var openSettings
     @AppStorage(cameraEnabledKey) private var cameraEnabled: Bool = false
     private let healthStore = HealthStore.shared
     private let gatewayManager = GatewayProcessManager.shared
@@ -29,22 +30,23 @@ struct GeneralSettings: View {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 12) {
                     SettingsToggleRow(
-                        title: "OpenClaw active",
-                        subtitle: "Pause to stop the OpenClaw gateway; no messages will be processed.",
+                        title: "XWorkmate active",
+                        subtitle: "Pause to stop the XWorkmate gateway; no messages will be processed.",
                         binding: self.activeBinding)
 
                     self.connectionSection
+                    self.accountAccessSection
 
                     Divider()
 
                     SettingsToggleRow(
                         title: "Launch at login",
-                        subtitle: "Automatically start OpenClaw after you sign in.",
+                        subtitle: "Automatically start XWorkmate after you sign in.",
                         binding: self.$state.launchAtLogin)
 
                     SettingsToggleRow(
                         title: "Show Dock icon",
-                        subtitle: "Keep OpenClaw visible in the Dock instead of menu-bar-only mode.",
+                        subtitle: "Keep XWorkmate visible in the Dock instead of menu-bar-only mode.",
                         binding: self.$state.showDockIcon)
 
                     SettingsToggleRow(
@@ -76,7 +78,7 @@ struct GeneralSettings: View {
                 Spacer(minLength: 12)
                 HStack {
                     Spacer()
-                    Button("Quit OpenClaw") { NSApp.terminate(nil) }
+                    Button("Quit XWorkmate") { NSApp.terminate(nil) }
                         .buttonStyle(.borderedProminent)
                 }
             }
@@ -103,7 +105,7 @@ struct GeneralSettings: View {
 
     private var connectionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("OpenClaw runs")
+            Text("XWorkmate runs")
                 .font(.title3.weight(.semibold))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -138,6 +140,27 @@ struct GeneralSettings: View {
                 self.remoteCard
             }
         }
+    }
+
+    private var accountAccessSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(self.state.signedInToAccount
+                    ? "Remote account features are available alongside the local-first desktop tools."
+                    : "Local tools stay available without an account. Sign in only when you want sync and remote resources.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button(self.state.signedInToAccount ? "Open Account" : "Account Login...") {
+                    self.openAccountSettings()
+                }
+                .buttonStyle(.bordered)
+            }
+        } label: {
+            Label("Account access", systemImage: self.state.accountTabSystemImage)
+        }
+        .groupBoxStyle(PlainSettingsGroupBoxStyle())
     }
 
     private var remoteCard: some View {
@@ -244,6 +267,15 @@ struct GeneralSettings: View {
             }
             .pickerStyle(.segmented)
             .frame(maxWidth: 320)
+        }
+    }
+
+    private func openAccountSettings() {
+        SettingsTabRouter.request(.account)
+        NSApp.activate(ignoringOtherApps: true)
+        self.openSettings()
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .openclawSelectSettingsTab, object: SettingsTab.account)
         }
     }
 

@@ -225,6 +225,39 @@ final class AppState {
         didSet { self.ifNotPreview { UserDefaults.standard.set(self.remoteCliPath, forKey: remoteCliPathKey) } }
     }
 
+    var authStatus: AccountAuthStatus {
+        didSet { self.ifNotPreview { UserDefaults.standard.set(self.authStatus.rawValue, forKey: accountAuthStatusKey) } }
+    }
+
+    var accountServerURL: String {
+        didSet { self.ifNotPreview { UserDefaults.standard.set(self.accountServerURL, forKey: accountServerURLKey) } }
+    }
+
+    var syncServiceURL: String {
+        didSet { self.ifNotPreview { UserDefaults.standard.set(self.syncServiceURL, forKey: accountSyncServiceURLKey) } }
+    }
+
+    var nodeServiceURL: String {
+        didSet { self.ifNotPreview { UserDefaults.standard.set(self.nodeServiceURL, forKey: accountNodeServiceURLKey) } }
+    }
+
+    var currentUser: AccountUser? {
+        didSet { self.ifNotPreview { Self.storeCodable(self.currentUser, key: accountCurrentUserKey) } }
+    }
+
+    var authToken: String? {
+        didSet {
+            self.ifNotPreview {
+                let trimmed = self.authToken?.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let trimmed, !trimmed.isEmpty {
+                    UserDefaults.standard.set(trimmed, forKey: accountTokenKey)
+                } else {
+                    UserDefaults.standard.removeObject(forKey: accountTokenKey)
+                }
+            }
+        }
+    }
+
     private var earBoostTask: Task<Void, Never>?
 
     init(preview: Bool = false) {
@@ -300,6 +333,13 @@ final class AppState {
         self.remoteIdentity = UserDefaults.standard.string(forKey: remoteIdentityKey) ?? ""
         self.remoteProjectRoot = UserDefaults.standard.string(forKey: remoteProjectRootKey) ?? ""
         self.remoteCliPath = UserDefaults.standard.string(forKey: remoteCliPathKey) ?? ""
+        self.authStatus = AccountAuthStatus(
+            rawValue: UserDefaults.standard.string(forKey: accountAuthStatusKey) ?? "") ?? .unauthenticated
+        self.accountServerURL = UserDefaults.standard.string(forKey: accountServerURLKey) ?? defaultAccountServerURL
+        self.syncServiceURL = UserDefaults.standard.string(forKey: accountSyncServiceURLKey) ?? ""
+        self.nodeServiceURL = UserDefaults.standard.string(forKey: accountNodeServiceURLKey) ?? ""
+        self.currentUser = Self.loadCodable(AccountUser.self, key: accountCurrentUserKey)
+        self.authToken = UserDefaults.standard.string(forKey: accountTokenKey)
         self.canvasEnabled = UserDefaults.standard.object(forKey: canvasEnabledKey) as? Bool ?? true
         let execDefaults = ExecApprovalsStore.resolveDefaults()
         self.execApprovalMode = ExecApprovalQuickMode.from(security: execDefaults.security, ask: execDefaults.ask)
@@ -584,6 +624,44 @@ final class AppState {
         self.sendCelebrationTick &+= 1
     }
 
+    var accountTabTitle: String {
+        self.authStatus.settingsTitle
+    }
+
+    var accountTabSystemImage: String {
+        self.authStatus.settingsSystemImage
+    }
+
+    var signedInToAccount: Bool {
+        self.authStatus == .authenticated && self.currentUser != nil && !(self.authToken?.isEmpty ?? true)
+    }
+
+    func continueOfflineMode() {
+        self.currentUser = nil
+        self.authToken = nil
+        self.authStatus = .offline
+    }
+
+    func mockSignIn(identifier: String, password: String) {
+        let trimmedIdentifier = identifier.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedIdentifier.isEmpty, !trimmedPassword.isEmpty else { return }
+
+        self.accountServerURL = self.accountServerURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if self.accountServerURL.isEmpty {
+            self.accountServerURL = defaultAccountServerURL
+        }
+        self.currentUser = .mock(from: trimmedIdentifier)
+        self.authToken = "mock-token-\(UUID().uuidString)"
+        self.authStatus = .authenticated
+    }
+
+    func signOutAccount(enterOfflineMode: Bool = false) {
+        self.currentUser = nil
+        self.authToken = nil
+        self.authStatus = enterOfflineMode ? .offline : .unauthenticated
+    }
+
     func setVoiceWakeEnabled(_ enabled: Bool) async {
         guard voiceWakeSupported else {
             self.swabbleEnabled = false
@@ -665,6 +743,20 @@ final class AppState {
         return fallback
     }
 
+    private static func loadCodable<Value: Decodable>(_ type: Value.Type, key: String) -> Value? {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
+
+    private static func storeCodable<Value: Encodable>(_ value: Value?, key: String) {
+        guard let value else {
+            UserDefaults.standard.removeObject(forKey: key)
+            return
+        }
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        UserDefaults.standard.set(data, forKey: key)
+    }
+
     private func storeChime(_ chime: VoiceWakeChime, key: String) {
         guard let data = try? JSONEncoder().encode(chime) else { return }
         UserDefaults.standard.set(data, forKey: key)
@@ -700,6 +792,12 @@ extension AppState {
         state.remoteIdentity = "~/.ssh/id_ed25519"
         state.remoteProjectRoot = "~/Projects/openclaw"
         state.remoteCliPath = ""
+        state.authStatus = .unauthenticated
+        state.accountServerURL = defaultAccountServerURL
+        state.syncServiceURL = ""
+        state.nodeServiceURL = ""
+        state.currentUser = nil
+        state.authToken = nil
         return state
     }
 }

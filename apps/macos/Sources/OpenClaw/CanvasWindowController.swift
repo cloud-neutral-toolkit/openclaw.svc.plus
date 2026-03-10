@@ -121,7 +121,7 @@ final class CanvasWindowController: NSWindowController, WKNavigationDelegate, NS
                 params.set('deliver', 'false');
                 params.set('channel', 'last');
                 params.set('key', deepLinkKey);
-                location.href = 'openclaw://agent?' + params.toString();
+                location.href = 'xworkmate://agent?' + params.toString();
               } catch {}
             }, true);
           } catch {}

@@ -121,6 +121,9 @@ struct MenuContent: View {
             } label: {
                 Label("Open Chat", systemImage: "bubble.left.and.bubble.right")
             }
+            Button { self.open(tab: .account) } label: {
+                Label(self.state.accountTabTitle, systemImage: self.state.accountTabSystemImage)
+            }
             if self.state.canvasEnabled {
                 Button {
                     Task { @MainActor in
@@ -149,7 +152,7 @@ struct MenuContent: View {
             Button("Settings…") { self.open(tab: .general) }
                 .keyboardShortcut(",", modifiers: [.command])
             self.debugMenu
-            Button("About OpenClaw") { self.open(tab: .about) }
+            Button("About XWorkmate") { self.open(tab: .about) }
             if let updater, updater.isAvailable, self.updateStatus.isUpdateReady {
                 Button("Update ready, restart now?") { updater.checkForUpdates(nil) }
             }
@@ -189,11 +192,11 @@ struct MenuContent: View {
     private var connectionLabel: String {
         switch self.state.connectionMode {
         case .unconfigured:
-            "OpenClaw Not Configured"
+            "XWorkmate Not Configured"
         case .remote:
-            "Remote OpenClaw Active"
+            "Remote XWorkmate Active"
         case .local:
-            "OpenClaw Active"
+            "XWorkmate Active"
         }
     }
 
