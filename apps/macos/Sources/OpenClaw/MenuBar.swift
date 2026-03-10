@@ -178,9 +178,7 @@ struct OpenClawApp: App {
         self.isMenuPresented = false
         Task { @MainActor in
             let sessionKey = await WebChatManager.shared.preferredSessionKey()
-            WebChatManager.shared.togglePanel(
-                sessionKey: sessionKey,
-                anchorProvider: { [self] in self.statusButtonScreenFrame() })
+            WebChatManager.shared.show(sessionKey: sessionKey)
         }
     }
 
@@ -277,6 +275,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await PortGuardian.shared.sweep(mode: AppStateStore.shared.connectionMode) }
         Task { await PeekabooBridgeHostCoordinator.shared.setEnabled(AppStateStore.shared.peekabooBridgeEnabled) }
         self.scheduleFirstRunOnboardingIfNeeded()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task { @MainActor in
+                let sessionKey = await WebChatManager.shared.preferredSessionKey()
+                WebChatManager.shared.show(sessionKey: sessionKey)
+            }
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             CLIInstallPrompter.shared.checkAndPromptIfNeeded(reason: "launch")
         }

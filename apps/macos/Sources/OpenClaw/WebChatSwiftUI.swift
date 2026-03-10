@@ -173,7 +173,16 @@ final class WebChatSwiftUIWindowController {
 
     func show() {
         guard let window else { return }
+        if window.isVisible && window.isKeyWindow && !window.isMiniaturized {
+            window.miniaturize(nil)
+            self.onVisibilityChanged?(false)
+            return
+        }
+
         self.ensureWindowSize()
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.onVisibilityChanged?(true)
@@ -265,18 +274,18 @@ final class WebChatSwiftUIWindowController {
                 styleMask: [.titled, .closable, .resizable, .miniaturizable],
                 backing: .buffered,
                 defer: false)
-            window.title = "XWorkmate Chat"
+            window.title = "XWorkmate"
             window.contentViewController = contentViewController
             window.isReleasedWhenClosed = false
-            window.titleVisibility = .visible
-            window.titlebarAppearsTransparent = false
-            window.backgroundColor = .clear
-            window.isOpaque = false
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.backgroundColor = .windowBackgroundColor
+            window.isOpaque = true
             window.center()
             WindowPlacement.ensureOnScreen(window: window, defaultSize: WebChatSwiftUILayout.windowSize)
             window.minSize = WebChatSwiftUILayout.windowMinSize
             window.contentView?.wantsLayer = true
-            window.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
+            window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
             return window
         case .panel:
             let panel = WebChatPanel(

@@ -31,6 +31,7 @@ final class DockIconManager: NSObject, @unchecked Sendable {
             let userWantsDockHidden = !UserDefaults.standard.bool(forKey: showDockIconKey)
             let visibleWindows = NSApp?.windows.filter { window in
                 window.isVisible &&
+                    !window.isMiniaturized &&
                     window.frame.width > 1 &&
                     window.frame.height > 1 &&
                     !window.isKind(of: NSPanel.self) &&
@@ -87,6 +88,16 @@ final class DockIconManager: NSObject, @unchecked Sendable {
                 self,
                 selector: #selector(self.windowVisibilityChanged),
                 name: NSWindow.willCloseNotification,
+                object: nil)
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(self.windowVisibilityChanged),
+                name: NSWindow.didMiniaturizeNotification,
+                object: nil)
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(self.windowVisibilityChanged),
+                name: NSWindow.didDeminiaturizeNotification,
                 object: nil)
             NotificationCenter.default.addObserver(
                 self,

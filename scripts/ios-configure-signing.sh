@@ -21,9 +21,18 @@ normalize_bundle_id() {
   raw="$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]')"
   raw="$(printf '%s' "$raw" | sed -E 's/[^a-z0-9.-]+/-/g; s/\.+/./g; s/^-+//; s/[.-]+$//')"
   if [[ -z "$raw" ]]; then
-    raw="ai.openclaw.ios.test.local"
+    raw="plus.svc.xworkmate.test.local"
   fi
   printf '%s\n' "$raw"
+}
+
+read_existing_setting() {
+  local key="$1"
+  [[ -f "${LOCAL_SIGNING_FILE}" ]] || return 0
+
+  sed -n -E "s/^${key}[[:space:]]*=[[:space:]]*(.*)$/\\1/p" "${LOCAL_SIGNING_FILE}" \
+    | tail -n 1 \
+    | sed -E 's/[[:space:]]+$//'
 }
 
 if [[ ! -x "${TEAM_ID_SCRIPT}" ]]; then
@@ -56,15 +65,22 @@ else
 fi
 bundle_suffix="$(sanitize_identifier_segment "${identity_source}")"
 
-bundle_base="${OPENCLAW_IOS_APP_BUNDLE_ID:-${OPENCLAW_IOS_BUNDLE_ID_BASE:-}}"
+existing_app_bundle_id="$(read_existing_setting "OPENCLAW_APP_BUNDLE_ID")"
+existing_share_bundle_id="$(read_existing_setting "OPENCLAW_SHARE_BUNDLE_ID")"
+existing_activity_widget_bundle_id="$(read_existing_setting "OPENCLAW_ACTIVITY_WIDGET_BUNDLE_ID")"
+existing_watch_app_bundle_id="$(read_existing_setting "OPENCLAW_WATCH_APP_BUNDLE_ID")"
+existing_watch_extension_bundle_id="$(read_existing_setting "OPENCLAW_WATCH_EXTENSION_BUNDLE_ID")"
+
+bundle_base="${OPENCLAW_IOS_APP_BUNDLE_ID:-${OPENCLAW_IOS_BUNDLE_ID_BASE:-${existing_app_bundle_id:-}}}"
 if [[ -z "${bundle_base}" ]]; then
-  bundle_base="ai.openclaw.ios.test.${bundle_suffix}"
+  bundle_base="plus.svc.xworkmate.test.${bundle_suffix}"
 fi
 bundle_base="$(normalize_bundle_id "${bundle_base}")"
 
-share_bundle_id="${OPENCLAW_IOS_SHARE_BUNDLE_ID:-${bundle_base}.share}"
-watch_app_bundle_id="${OPENCLAW_IOS_WATCH_APP_BUNDLE_ID:-${bundle_base}.watchkitapp}"
-watch_extension_bundle_id="${OPENCLAW_IOS_WATCH_EXTENSION_BUNDLE_ID:-${watch_app_bundle_id}.extension}"
+share_bundle_id="${OPENCLAW_IOS_SHARE_BUNDLE_ID:-${existing_share_bundle_id:-${bundle_base}.share}}"
+activity_widget_bundle_id="${OPENCLAW_IOS_ACTIVITY_WIDGET_BUNDLE_ID:-${existing_activity_widget_bundle_id:-${bundle_base}.activity}}"
+watch_app_bundle_id="${OPENCLAW_IOS_WATCH_APP_BUNDLE_ID:-${existing_watch_app_bundle_id:-${bundle_base}.watchkitapp}}"
+watch_extension_bundle_id="${OPENCLAW_IOS_WATCH_EXTENSION_BUNDLE_ID:-${existing_watch_extension_bundle_id:-${watch_app_bundle_id}.extension}}"
 
 code_sign_style="${OPENCLAW_IOS_CODE_SIGN_STYLE:-Automatic}"
 app_profile="${OPENCLAW_IOS_APP_PROFILE:-}"
@@ -76,7 +92,7 @@ cat >"${tmp_file}" <<EOF
 // This file is local-only and should not be committed.
 // Override values with env vars if needed:
 // OPENCLAW_IOS_APP_BUNDLE_ID / OPENCLAW_IOS_BUNDLE_ID_BASE
-// OPENCLAW_IOS_SHARE_BUNDLE_ID / OPENCLAW_IOS_WATCH_APP_BUNDLE_ID / OPENCLAW_IOS_WATCH_EXTENSION_BUNDLE_ID
+// OPENCLAW_IOS_SHARE_BUNDLE_ID / OPENCLAW_IOS_ACTIVITY_WIDGET_BUNDLE_ID / OPENCLAW_IOS_WATCH_APP_BUNDLE_ID / OPENCLAW_IOS_WATCH_EXTENSION_BUNDLE_ID
 // OPENCLAW_IOS_CODE_SIGN_STYLE / OPENCLAW_IOS_APP_PROFILE / OPENCLAW_IOS_SHARE_PROFILE
 OPENCLAW_CODE_SIGN_STYLE = ${code_sign_style}
 OPENCLAW_DEVELOPMENT_TEAM = ${team_id}
@@ -84,6 +100,7 @@ OPENCLAW_DEVELOPMENT_TEAM = ${team_id}
 OPENCLAW_IOS_SELECTED_TEAM = ${team_id}
 OPENCLAW_APP_BUNDLE_ID = ${bundle_base}
 OPENCLAW_SHARE_BUNDLE_ID = ${share_bundle_id}
+OPENCLAW_ACTIVITY_WIDGET_BUNDLE_ID = ${activity_widget_bundle_id}
 OPENCLAW_WATCH_APP_BUNDLE_ID = ${watch_app_bundle_id}
 OPENCLAW_WATCH_EXTENSION_BUNDLE_ID = ${watch_extension_bundle_id}
 OPENCLAW_APP_PROFILE = ${app_profile}

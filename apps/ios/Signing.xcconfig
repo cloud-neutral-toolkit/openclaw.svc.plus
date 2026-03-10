@@ -5,11 +5,11 @@
 OPENCLAW_CODE_SIGN_STYLE = Manual
 OPENCLAW_DEVELOPMENT_TEAM = Y5PE65HELJ
 
-OPENCLAW_APP_BUNDLE_ID = ai.openclaw.ios
-OPENCLAW_SHARE_BUNDLE_ID = ai.openclaw.ios.share
+OPENCLAW_APP_BUNDLE_ID = plus.svc.xworkmate
+OPENCLAW_SHARE_BUNDLE_ID = plus.svc.xworkmate.share
 
-OPENCLAW_APP_PROFILE = ai.openclaw.ios Development
-OPENCLAW_SHARE_PROFILE = ai.openclaw.ios.share Development
+OPENCLAW_APP_PROFILE = plus.svc.xworkmate Development
+OPENCLAW_SHARE_PROFILE = plus.svc.xworkmate.share Development
 
 // Keep local includes after defaults: xcconfig is evaluated top-to-bottom,
 // so later assignments in local files override the defaults above.
