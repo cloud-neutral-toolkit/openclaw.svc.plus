@@ -86,6 +86,7 @@ targets:
         CFBundleDisplayName: XWorkmate
         CFBundleName: XWorkmate
         CFBundleIdentifier: plus.svc.xworkmate
+        LSApplicationCategoryType: public.app-category.productivity
     settings:
       base:
         CODE_SIGN_IDENTITY: "Apple Development"
@@ -94,3 +95,21 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "6.0"
         ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Sources/OpenClaw/XWorkmate.entitlements
+    postBuildScripts:
+      - name: "Patch Sparkle Sandbox Entitlements"
+        script: |
+          if [ -d "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework" ]; then
+            ENTITLEMENTS="$SRCROOT/Sources/OpenClaw/XWorkmate.entitlements"
+            ID="${EXPANDED_CODE_SIGN_IDENTITY:-$CODE_SIGN_IDENTITY}"
+            if [ -z "$ID" ] || [ "$ID" = "-" ]; then
+              echo "No valid code sign identity found, skipping."
+              exit 0
+            fi
+            echo "Re-signing Sparkle binaries with Sandbox entitlement..."
+            codesign --force --sign "$ID" --options runtime --entitlements "$ENTITLEMENTS" "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate" || true
+            codesign --force --sign "$ID" --options runtime --entitlements "$ENTITLEMENTS" "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app/Contents/MacOS/Updater" || true
+            codesign --force --sign "$ID" --options runtime --entitlements "$ENTITLEMENTS" "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader" || true
+            codesign --force --sign "$ID" --options runtime --entitlements "$ENTITLEMENTS" "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer" || true
+            codesign --force --sign "$ID" --options runtime --entitlements "$ENTITLEMENTS" "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Sparkle.framework" || true
+          fi
