@@ -1,0 +1,73 @@
+name: XWorkmate
+options:
+  bundleIdPrefix: plus.svc
+  deploymentTarget:
+    macOS: "15.0"
+  xcodeVersion: "16.0"
+
+packages:
+  OpenClawKit:
+    path: ../shared/OpenClawKit
+  Swabble:
+    path: ../../Swabble
+  MenuBarExtraAccess:
+    url: https://github.com/orchetect/MenuBarExtraAccess
+    version: 1.2.2
+  Subprocess:
+    url: https://github.com/swiftlang/swift-subprocess.git
+    version: 0.1.0
+  swiftLog:
+    url: https://github.com/apple/swift-log.git
+    version: 1.10.1
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    version: 2.9.0
+  Peekaboo:
+    url: https://github.com/steipete/Peekaboo.git
+    branch: main
+
+targets:
+  XWorkmate:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/OpenClaw
+        excludes:
+          - Resources/Info.plist
+      - path: Sources/OpenClawDiscovery
+      - path: Sources/OpenClawIPC
+    dependencies:
+      - package: OpenClawKit
+        product: OpenClawKit
+      - package: OpenClawKit
+        product: OpenClawChatUI
+      - package: OpenClawKit
+        product: OpenClawProtocol
+      - package: Swabble
+        product: SwabbleKit
+      - package: MenuBarExtraAccess
+        product: MenuBarExtraAccess
+      - package: Subprocess
+        product: Subprocess
+      - package: swiftLog
+        product: Logging
+      - package: Sparkle
+        product: Sparkle
+      - package: Peekaboo
+        product: PeekabooBridge
+      - package: Peekaboo
+        product: PeekabooAutomationKit
+    info:
+      path: Sources/OpenClaw/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: XWorkmate
+        CFBundleName: XWorkmate
+        CFBundleIdentifier: plus.svc.xworkmate
+    settings:
+      base:
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: "N3G9T67W78"
+        PRODUCT_BUNDLE_IDENTIFIER: "plus.svc.xworkmate"
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "6.0"
+        ENABLE_HARDENED_RUNTIME: YES
