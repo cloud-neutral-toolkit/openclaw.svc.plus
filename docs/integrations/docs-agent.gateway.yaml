@@ -1,0 +1,28 @@
+gateway:
+  downstreamAgents:
+    - id: docs-agent
+      type: http
+      baseUrl: https://docs.svc.plus/api/v1/agent/invoke
+      auth:
+        header: X-Service-Token
+        env: INTERNAL_SERVICE_TOKEN
+      routes:
+        - intent: docs.search
+        - intent: docs.read_page
+        - intent: docs.list_collections
+        - intent: blogs.search
+        - intent: blogs.read_post
+        - intent: docs.plan_update
+        - intent: docs.apply_update
+        - intent: docs.reload
+      policy:
+        readOnlyTools:
+          - docs.search
+          - docs.read_page
+          - docs.list_collections
+          - blogs.search
+          - blogs.read_post
+        confirmRequiredTools:
+          - docs.apply_update
+        adminOnlyTools:
+          - docs.reload
